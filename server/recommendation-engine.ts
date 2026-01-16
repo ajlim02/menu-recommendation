@@ -72,12 +72,14 @@ export function calculateRecommendations(
     if (mealType) {
       const target = getTargetHeavyLevel(mealType);
       if (menu.heavyLevel >= target.min && menu.heavyLevel <= target.max) {
-        mealTypeBonus = 15;
+        mealTypeBonus = 30;
         if (menu.heavyLevel === target.ideal) {
-          mealTypeBonus = 25;
+          mealTypeBonus = 50;
         }
       } else {
-        mealTypeBonus = -20;
+        // 아침에 무거운 음식, 저녁에 가벼운 음식은 강하게 패널티
+        const deviation = Math.abs(menu.heavyLevel - target.ideal);
+        mealTypeBonus = -40 * deviation;
       }
     }
 
@@ -122,11 +124,11 @@ export function calculateRecommendations(
     }
 
     const score =
-      preferenceScore * 0.25 +
-      diversityBonus * 0.2 +
-      repetitionPenalty * 0.25 +
+      preferenceScore * 0.2 +
+      diversityBonus * 0.15 +
+      repetitionPenalty * 0.2 +
       feedbackWeight * 0.1 +
-      mealTypeBonus * 0.1 +
+      mealTypeBonus * 0.25 +
       healthBonus * 0.05 +
       favoriteBonus * 0.05;
 

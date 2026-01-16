@@ -64,11 +64,11 @@ Preferred communication style: Simple, everyday language.
 
 ### Recommendation Engine
 Located in `server/recommendation-engine.ts`, the engine calculates menu scores based on:
-- Preference matching (25%) - weighted by user settings (cuisine, base, protein, soup, spicy, heavy, price)
-- Diversity bonus (20%) - avoid repetition of cuisine/base types
-- Repetition penalty (25%) - recently eaten items scored lower
+- Preference matching (20%) - weighted by user settings (cuisine, base, protein, soup, spicy, heavy, price)
+- Diversity bonus (15%) - avoid repetition of cuisine/base types
+- Repetition penalty (20%) - recently eaten items scored lower
 - Feedback weight (10%) - liked/disliked items adjusted
-- Meal-type bonus (10%) - breakfast prefers lighter foods (heavyLevel 1-2), dinner prefers heavier foods (heavyLevel 2-3)
+- Meal-type bonus (25%) - strongest weight; breakfast prefers lighter foods (heavyLevel 1-2), dinner prefers heavier foods (heavyLevel 2-3); deviation from ideal heavily penalized
 - Health bonus (5%) - vegetarian, salad, light menus preferred when preferHealthy is enabled; fitnessGoal adjusts scoring (diet: lighter foods, muscle: high-protein foods)
 - Favorite bonus (5%) - menus selected during taste onboarding get extra score
 
