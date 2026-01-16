@@ -41,7 +41,8 @@ Preferred communication style: Simple, everyday language.
 - **Build:** esbuild for production bundling, tsx for development
 
 **Key API Endpoints:**
-- `GET/POST/DELETE /api/meal-records` - CRUD for meal history
+- `GET/POST/DELETE /api/meal-records` - CRUD for meal history (POST auto-corrects menu names via fuzzy matching)
+- `GET /api/menu-suggestions?q=query` - Autocomplete suggestions with fuzzy matching
 - `GET/PUT /api/preferences` - User preference management (includes favoriteMenuIds, preferHealthy, onboardingCompleted)
 - `GET /api/recommendations?mealType=lunch&excludeIds=id1,id2` - Get personalized menu suggestions with meal-type and exclusion support
 - `GET /api/menu-candidates` - Get category-grouped menu candidates for taste onboarding
@@ -53,6 +54,7 @@ Preferred communication style: Simple, everyday language.
 - **ORM:** Drizzle ORM configured for PostgreSQL
 - **Current Storage:** In-memory storage (MemStorage class) with interface for future DB migration
 - **Menu Database:** Static menu catalog with 100+ Korean/Asian menu items in `server/menu-database.ts`
+- **Menu Matcher:** Fuzzy search engine in `server/menu-matcher.ts` using Fuse.js with Korean Hangul support (Jamo decomposition, Chosung matching, alias/synonym mapping)
 
 **Data Models:**
 - MealRecord: User's meal history entries

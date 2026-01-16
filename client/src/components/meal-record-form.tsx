@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,8 +23,8 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { mealTypes, mealTypeLabels } from "@shared/schema";
-import { Plus, Calendar, Utensils } from "lucide-react";
+import { mealTypes, mealTypeLabels, cuisineLabels, CuisineType } from "@shared/schema";
+import { Plus, Calendar, Utensils, Search, Check } from "lucide-react";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 
@@ -38,10 +38,22 @@ const formSchema = z.object({
 
 type FormData = z.infer<typeof formSchema>;
 
+interface MenuSuggestion {
+  id: string;
+  displayName: string;
+  cuisine: CuisineType;
+  confidence: number;
+}
+
 export function MealRecordForm() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isExpanded, setIsExpanded] = useState(false);
+  const [menuQuery, setMenuQuery] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
 
   const today = format(new Date(), "yyyy-MM-dd");
 
@@ -54,19 +66,35 @@ export function MealRecordForm() {
     },
   });
 
+  const { data: suggestions = [] } = useQuery<MenuSuggestion[]>({
+    queryKey: [`/api/menu-suggestions?q=${encodeURIComponent(menuQuery)}`],
+    enabled: menuQuery.length >= 1,
+    staleTime: 1000,
+  });
+
   const mutation = useMutation({
     mutationFn: async (data: FormData) => {
       return apiRequest("POST", "/api/meal-records", data);
     },
-    onSuccess: () => {
+    onSuccess: async (response) => {
+      const result = await response.json();
       queryClient.invalidateQueries({ queryKey: ["/api/meal-records"] });
       queryClient.invalidateQueries({ queryKey: ["/api/recommendations"] });
       form.reset({ date: today, mealType: "lunch", menuText: "" });
+      setMenuQuery("");
       setIsExpanded(false);
-      toast({
-        title: "기록 완료",
-        description: "식사 기록이 추가되었어요.",
-      });
+      
+      if (result.originalInput && result.originalInput !== result.menuText) {
+        toast({
+          title: "기록 완료",
+          description: `"${result.originalInput}" → "${result.menuText}"(으)로 인식했어요.`,
+        });
+      } else {
+        toast({
+          title: "기록 완료",
+          description: "식사 기록이 추가되었어요.",
+        });
+      }
     },
     onError: () => {
       toast({
@@ -80,6 +108,52 @@ export function MealRecordForm() {
   const onSubmit = (data: FormData) => {
     mutation.mutate(data);
   };
+
+  const handleMenuInputChange = (value: string) => {
+    setMenuQuery(value);
+    form.setValue("menuText", value);
+    setShowSuggestions(true);
+    setSelectedIndex(-1);
+  };
+
+  const handleSelectSuggestion = (suggestion: MenuSuggestion) => {
+    form.setValue("menuText", suggestion.displayName);
+    setMenuQuery(suggestion.displayName);
+    setShowSuggestions(false);
+    setSelectedIndex(-1);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!showSuggestions || suggestions.length === 0) return;
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setSelectedIndex((prev) => (prev < suggestions.length - 1 ? prev + 1 : 0));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setSelectedIndex((prev) => (prev > 0 ? prev - 1 : suggestions.length - 1));
+    } else if (e.key === "Enter" && selectedIndex >= 0) {
+      e.preventDefault();
+      handleSelectSuggestion(suggestions[selectedIndex]);
+    } else if (e.key === "Escape") {
+      setShowSuggestions(false);
+    }
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        suggestionsRef.current &&
+        !suggestionsRef.current.contains(e.target as Node) &&
+        inputRef.current &&
+        !inputRef.current.contains(e.target as Node)
+      ) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   if (!isExpanded) {
     return (
@@ -158,15 +232,49 @@ export function MealRecordForm() {
               control={form.control}
               name="menuText"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>메뉴</FormLabel>
+                <FormItem className="relative">
+                  <FormLabel className="flex items-center gap-1.5">
+                    <Search className="h-3.5 w-3.5" />
+                    메뉴
+                  </FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="예: 김치찌개, 된장찌개, 파스타..."
-                      {...field}
+                      ref={inputRef}
+                      placeholder="예: 김치찌개, 김찌, 돈가스..."
+                      value={menuQuery || field.value}
+                      onChange={(e) => handleMenuInputChange(e.target.value)}
+                      onFocus={() => menuQuery && setShowSuggestions(true)}
+                      onKeyDown={handleKeyDown}
+                      autoComplete="off"
                       data-testid="input-menu"
                     />
                   </FormControl>
+                  {showSuggestions && suggestions.length > 0 && (
+                    <div
+                      ref={suggestionsRef}
+                      className="absolute top-full left-0 right-0 z-50 mt-1 max-h-60 overflow-auto rounded-md border bg-popover shadow-lg"
+                    >
+                      {suggestions.map((suggestion, index) => (
+                        <button
+                          key={suggestion.id}
+                          type="button"
+                          className={`flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm transition-colors hover:bg-accent ${
+                            index === selectedIndex ? "bg-accent" : ""
+                          }`}
+                          onClick={() => handleSelectSuggestion(suggestion)}
+                          data-testid={`suggestion-${suggestion.id}`}
+                        >
+                          <span className="font-medium">{suggestion.displayName}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {cuisineLabels[suggestion.cuisine]}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    정확한 메뉴명을 몰라도 괜찮아요. 비슷하게 입력하면 자동으로 찾아드려요.
+                  </p>
                   <FormMessage />
                 </FormItem>
               )}
@@ -176,7 +284,10 @@ export function MealRecordForm() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setIsExpanded(false)}
+                onClick={() => {
+                  setIsExpanded(false);
+                  setMenuQuery("");
+                }}
                 className="flex-1"
                 data-testid="button-cancel"
               >

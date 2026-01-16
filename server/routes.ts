@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertMealRecordSchema, insertFeedbackSchema, userPreferencesSchema, mealTypes, MealType } from "@shared/schema";
 import { calculateRecommendations, calculateInsights, getMenuCandidatesByCategory } from "./recommendation-engine";
+import { getMenuMatcher } from "./menu-matcher";
 import { z } from "zod";
 
 export async function registerRoutes(
@@ -22,14 +23,59 @@ export async function registerRoutes(
   app.post("/api/meal-records", async (req, res) => {
     try {
       const parsed = insertMealRecordSchema.parse(req.body);
-      const record = await storage.createMealRecord(parsed);
-      res.status(201).json(record);
+      const menus = storage.getMenuDatabase();
+      const matcher = getMenuMatcher(menus);
+      
+      const matchResult = matcher.findBestMatch(parsed.menuText);
+      
+      let finalMenuText = parsed.menuText;
+      let matchedMenuId: string | undefined;
+      
+      if (matchResult.menu && matchResult.confidence >= 0.5) {
+        finalMenuText = matchResult.menu.displayName;
+        matchedMenuId = matchResult.menu.id;
+      }
+      
+      const record = await storage.createMealRecord({
+        ...parsed,
+        menuText: finalMenuText,
+      });
+      
+      res.status(201).json({
+        ...record,
+        matchedMenuId,
+        matchConfidence: matchResult.confidence,
+        matchType: matchResult.matchType,
+        originalInput: parsed.menuText !== finalMenuText ? parsed.menuText : undefined,
+      });
     } catch (error) {
       if (error instanceof z.ZodError) {
         res.status(400).json({ error: error.errors });
       } else {
         res.status(500).json({ error: "Failed to create meal record" });
       }
+    }
+  });
+
+  app.get("/api/menu-suggestions", async (req, res) => {
+    try {
+      const query = req.query.q as string;
+      if (!query || query.length < 1) {
+        return res.json([]);
+      }
+      
+      const menus = storage.getMenuDatabase();
+      const matcher = getMenuMatcher(menus);
+      const suggestions = matcher.findSuggestions(query, 8);
+      
+      res.json(suggestions.map(s => ({
+        id: s.menu.id,
+        displayName: s.menu.displayName,
+        cuisine: s.menu.cuisine,
+        confidence: s.confidence,
+      })));
+    } catch (error) {
+      res.status(500).json({ error: "Failed to get suggestions" });
     }
   });
 
