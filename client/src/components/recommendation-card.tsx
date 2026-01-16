@@ -130,40 +130,42 @@ export function RecommendationCard({ recommendation, isTopPick, rank, onFeedback
         </div>
       </CardContent>
 
-      <CardFooter className="flex gap-2 pt-0">
+      <CardFooter className="flex flex-col gap-2 pt-0">
         <Button
           variant="default"
-          size="sm"
-          className="flex-1 min-w-0"
+          size="default"
+          className="w-full gap-2"
           onClick={() => handleAction("select")}
           disabled={feedbackMutation.isPending}
           data-testid={`button-select-${menu.id}`}
         >
-          <Check className="h-4 w-4 shrink-0" />
-          <span className="ml-1 truncate">선택</span>
+          <Check className="h-4 w-4" />
+          선택할래요
         </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          className="flex-1 min-w-0"
-          onClick={() => handleAction("reject")}
-          disabled={feedbackMutation.isPending}
-          data-testid={`button-reject-${menu.id}`}
-        >
-          <X className="h-4 w-4 shrink-0" />
-          <span className="ml-1 truncate">거절</span>
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="flex-1 min-w-0"
-          onClick={() => handleAction("skip")}
-          disabled={feedbackMutation.isPending}
-          data-testid={`button-skip-${menu.id}`}
-        >
-          <Clock className="h-4 w-4 shrink-0" />
-          <span className="ml-1 truncate">나중에</span>
-        </Button>
+        <div className="flex w-full gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1 gap-1.5"
+            onClick={() => handleAction("reject")}
+            disabled={feedbackMutation.isPending}
+            data-testid={`button-reject-${menu.id}`}
+          >
+            <X className="h-4 w-4" />
+            별로예요
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="flex-1 gap-1.5"
+            onClick={() => handleAction("skip")}
+            disabled={feedbackMutation.isPending}
+            data-testid={`button-skip-${menu.id}`}
+          >
+            <Clock className="h-4 w-4" />
+            나중에
+          </Button>
+        </div>
       </CardFooter>
     </Card>
   );
