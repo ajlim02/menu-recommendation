@@ -50,6 +50,9 @@ export const userPreferencesSchema = z.object({
   preferredHeavyLevel: z.number().min(1).max(3),
   preferredPriceRange: z.array(z.enum(["low", "medium", "high"])),
   excludedIngredients: z.array(z.string()),
+  favoriteMenuIds: z.array(z.string()).default([]),
+  preferHealthy: z.boolean().default(false),
+  onboardingCompleted: z.boolean().default(false),
 });
 
 export type UserPreferences = z.infer<typeof userPreferencesSchema>;

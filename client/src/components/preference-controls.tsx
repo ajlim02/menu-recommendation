@@ -24,7 +24,9 @@ import {
 } from "@shared/schema";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
-import { Settings, Flame, Scale, Banknote, X, Plus, Soup } from "lucide-react";
+import { Settings, Flame, Scale, Banknote, X, Plus, Soup, Dumbbell } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 interface ToggleChipProps {
   label: string;
@@ -60,6 +62,9 @@ const defaultPreferences: UserPreferences = {
   preferredHeavyLevel: 2,
   preferredPriceRange: ["low", "medium", "high"],
   excludedIngredients: [],
+  favoriteMenuIds: [],
+  preferHealthy: false,
+  onboardingCompleted: false,
 };
 
 export function PreferenceControls() {
@@ -324,6 +329,28 @@ export function PreferenceControls() {
               />
             ))}
           </div>
+        </div>
+
+        <div className="space-y-4 rounded-lg border bg-muted/30 p-4">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <Dumbbell className="h-4 w-4 text-green-600" />
+              <Label htmlFor="health-mode" className="text-sm font-medium">
+                건강식 선호
+              </Label>
+            </div>
+            <Switch
+              id="health-mode"
+              checked={localPrefs.preferHealthy}
+              onCheckedChange={(checked) =>
+                setLocalPrefs({ ...localPrefs, preferHealthy: checked })
+              }
+              data-testid="switch-healthy"
+            />
+          </div>
+          <p className="text-xs text-muted-foreground">
+            운동 중이시거나 건강한 식단을 원하시면 켜주세요. 샐러드, 채식, 가벼운 메뉴를 우선 추천해요.
+          </p>
         </div>
 
         <div className="space-y-3">

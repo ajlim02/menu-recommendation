@@ -19,6 +19,7 @@ interface RecommendationCardProps {
   recommendation: Recommendation;
   isTopPick?: boolean;
   rank?: number;
+  onFeedback?: (menuId: string, action: "select" | "reject" | "skip") => void;
 }
 
 function getSpicyIcon(level: number) {
@@ -32,7 +33,7 @@ function getSpicyIcon(level: number) {
   );
 }
 
-export function RecommendationCard({ recommendation, isTopPick, rank }: RecommendationCardProps) {
+export function RecommendationCard({ recommendation, isTopPick, rank, onFeedback }: RecommendationCardProps) {
   const { menu, reason } = recommendation;
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -42,16 +43,25 @@ export function RecommendationCard({ recommendation, isTopPick, rank }: Recommen
       return apiRequest("POST", "/api/feedback", { menuId: menu.id, action });
     },
     onSuccess: (_, action) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/recommendations"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/insights"] });
-      const messages = {
-        select: { title: "선택 완료!", description: `${menu.displayName}을(를) 선택하셨어요.` },
-        reject: { title: "거절됨", description: "다음엔 덜 추천할게요." },
-        skip: { title: "나중에", description: "다음에 다시 추천할게요." },
-      };
-      toast(messages[action]);
+      if (!onFeedback) {
+        queryClient.invalidateQueries({ queryKey: ["/api/recommendations"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/insights"] });
+        const messages = {
+          select: { title: "선택 완료!", description: `${menu.displayName}을(를) 선택하셨어요.` },
+          reject: { title: "거절됨", description: "다음엔 덜 추천할게요." },
+          skip: { title: "나중에", description: "다음에 다시 추천할게요." },
+        };
+        toast(messages[action]);
+      }
     },
   });
+
+  const handleAction = (action: "select" | "reject" | "skip") => {
+    if (onFeedback) {
+      onFeedback(menu.id, action);
+    }
+    feedbackMutation.mutate(action);
+  };
 
   return (
     <Card
@@ -124,7 +134,7 @@ export function RecommendationCard({ recommendation, isTopPick, rank }: Recommen
         <Button
           variant="default"
           className="flex-1"
-          onClick={() => feedbackMutation.mutate("select")}
+          onClick={() => handleAction("select")}
           disabled={feedbackMutation.isPending}
           data-testid={`button-select-${menu.id}`}
         >
@@ -134,7 +144,7 @@ export function RecommendationCard({ recommendation, isTopPick, rank }: Recommen
         <Button
           variant="outline"
           className="flex-1"
-          onClick={() => feedbackMutation.mutate("reject")}
+          onClick={() => handleAction("reject")}
           disabled={feedbackMutation.isPending}
           data-testid={`button-reject-${menu.id}`}
         >
@@ -144,7 +154,7 @@ export function RecommendationCard({ recommendation, isTopPick, rank }: Recommen
         <Button
           variant="ghost"
           className="flex-1"
-          onClick={() => feedbackMutation.mutate("skip")}
+          onClick={() => handleAction("skip")}
           disabled={feedbackMutation.isPending}
           data-testid={`button-skip-${menu.id}`}
         >

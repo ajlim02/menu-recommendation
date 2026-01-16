@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertMealRecordSchema, insertFeedbackSchema, userPreferencesSchema, mealTypes, MealType } from "@shared/schema";
-import { calculateRecommendations, calculateInsights } from "./recommendation-engine";
+import { calculateRecommendations, calculateInsights, getMenuCandidatesByCategory } from "./recommendation-engine";
 import { z } from "zod";
 
 export async function registerRoutes(
@@ -76,17 +76,37 @@ export async function registerRoutes(
       const feedback = await storage.getFeedback();
       const menus = storage.getMenuDatabase();
 
+      const mealType = req.query.mealType as MealType | undefined;
+      const excludeIds = req.query.excludeIds 
+        ? (req.query.excludeIds as string).split(",") 
+        : undefined;
+
+      const validMealType = mealType && mealTypes.includes(mealType) ? mealType : undefined;
+
       const recommendations = calculateRecommendations(
         menus,
         mealRecords,
         preferences,
-        feedback
+        feedback,
+        validMealType,
+        excludeIds
       );
 
       res.json(recommendations);
     } catch (error) {
       console.error("Recommendation error:", error);
       res.status(500).json({ error: "Failed to generate recommendations" });
+    }
+  });
+
+  app.get("/api/menu-candidates", async (req, res) => {
+    try {
+      const preferences = await storage.getPreferences();
+      const menus = storage.getMenuDatabase();
+      const candidates = getMenuCandidatesByCategory(menus, preferences);
+      res.json(candidates);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to get menu candidates" });
     }
   });
 
@@ -166,6 +186,9 @@ export async function registerRoutes(
         preferredHeavyLevel: 2,
         preferredPriceRange: ["low" as const, "medium" as const],
         excludedIngredients: [],
+        favoriteMenuIds: [],
+        preferHealthy: false,
+        onboardingCompleted: true,
       };
 
       await storage.updatePreferences(demoPrefs);

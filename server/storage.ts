@@ -36,6 +36,9 @@ const defaultPreferences: UserPreferences = {
   preferredHeavyLevel: 2,
   preferredPriceRange: ["low", "medium", "high"],
   excludedIngredients: [],
+  favoriteMenuIds: [],
+  preferHealthy: false,
+  onboardingCompleted: false,
 };
 
 export class MemStorage implements IStorage {

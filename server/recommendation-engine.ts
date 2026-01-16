@@ -8,17 +8,35 @@ import {
   baseLabels,
   CuisineType,
   BaseType,
+  MealType,
 } from "@shared/schema";
 
 interface FeedbackWeights {
   [menuId: string]: number;
 }
 
+function getTargetHeavyLevel(mealType: MealType): { min: number; max: number; ideal: number } {
+  switch (mealType) {
+    case "breakfast":
+      return { min: 1, max: 2, ideal: 1 };
+    case "lunch":
+      return { min: 1, max: 3, ideal: 2 };
+    case "dinner":
+      return { min: 2, max: 3, ideal: 3 };
+    case "snack":
+      return { min: 1, max: 1, ideal: 1 };
+    default:
+      return { min: 1, max: 3, ideal: 2 };
+  }
+}
+
 export function calculateRecommendations(
   menus: Menu[],
   mealRecords: MealRecord[],
   preferences: UserPreferences,
-  feedbackHistory: Feedback[]
+  feedbackHistory: Feedback[],
+  mealType?: MealType,
+  excludeMenuIds?: string[]
 ): Recommendation[] {
   const feedbackWeights = calculateFeedbackWeights(feedbackHistory);
   const recentMenuIds = new Set(
@@ -31,7 +49,10 @@ export function calculateRecommendations(
   const recentCuisines = countCategories(mealRecords, menus, "cuisine");
   const recentBases = countCategories(mealRecords, menus, "base");
 
-  const scored = menus.map((menu) => {
+  const excludeSet = new Set(excludeMenuIds || []);
+  const filteredMenus = menus.filter((m) => !excludeSet.has(m.id));
+
+  const scored = filteredMenus.map((menu) => {
     const preferenceScore = calculatePreferenceScore(menu, preferences);
     const diversityBonus = calculateDiversityBonus(
       menu,
@@ -47,11 +68,45 @@ export function calculateRecommendations(
     );
     const feedbackWeight = feedbackWeights[menu.id] || 0;
 
+    let mealTypeBonus = 0;
+    if (mealType) {
+      const target = getTargetHeavyLevel(mealType);
+      if (menu.heavyLevel >= target.min && menu.heavyLevel <= target.max) {
+        mealTypeBonus = 15;
+        if (menu.heavyLevel === target.ideal) {
+          mealTypeBonus = 25;
+        }
+      } else {
+        mealTypeBonus = -20;
+      }
+    }
+
+    let healthBonus = 0;
+    if (preferences.preferHealthy) {
+      if (menu.protein === "vegetarian" || menu.base === "salad") {
+        healthBonus = 20;
+      }
+      if (menu.heavyLevel === 1) {
+        healthBonus += 10;
+      }
+      if (menu.heavyLevel === 3) {
+        healthBonus -= 15;
+      }
+    }
+
+    let favoriteBonus = 0;
+    if (preferences.favoriteMenuIds?.includes(menu.id)) {
+      favoriteBonus = 20;
+    }
+
     const score =
-      preferenceScore * 0.3 +
-      diversityBonus * 0.25 +
-      repetitionPenalty * 0.35 +
-      feedbackWeight * 0.1;
+      preferenceScore * 0.25 +
+      diversityBonus * 0.2 +
+      repetitionPenalty * 0.25 +
+      feedbackWeight * 0.1 +
+      mealTypeBonus * 0.1 +
+      healthBonus * 0.05 +
+      favoriteBonus * 0.05;
 
     const reason = generateReason(
       menu,
@@ -59,7 +114,8 @@ export function calculateRecommendations(
       preferences,
       recentCuisines,
       recentBases,
-      feedbackWeight
+      feedbackWeight,
+      mealType
     );
 
     return {
@@ -77,6 +133,25 @@ export function calculateRecommendations(
     .filter((r) => r.score > -50)
     .sort((a, b) => b.score - a.score)
     .slice(0, 13);
+}
+
+export function getMenuCandidatesByCategory(
+  menus: Menu[],
+  preferences: UserPreferences
+): Record<CuisineType, Menu[]> {
+  const result: Record<string, Menu[]> = {};
+  const cuisines: CuisineType[] = ["korean", "chinese", "japanese", "western", "bunsik", "asian", "other"];
+
+  cuisines.forEach((cuisine) => {
+    const filtered = menus
+      .filter((m) => m.cuisine === cuisine)
+      .filter((m) => m.spicyLevel <= preferences.maxSpicyLevel)
+      .sort(() => Math.random() - 0.5)
+      .slice(0, 8);
+    result[cuisine] = filtered;
+  });
+
+  return result as Record<CuisineType, Menu[]>;
 }
 
 function calculatePreferenceScore(
@@ -252,12 +327,25 @@ function generateReason(
   preferences: UserPreferences,
   recentCuisines: Record<string, number>,
   recentBases: Record<string, number>,
-  feedbackWeight: number
+  feedbackWeight: number,
+  mealType?: MealType
 ): string {
   const reasons: string[] = [];
 
   if (records.length === 0) {
     return "새로운 시작! 이 메뉴로 오늘의 첫 식사를 즐겨보세요.";
+  }
+
+  if (mealType === "breakfast" && menu.heavyLevel === 1) {
+    reasons.push("아침에 딱 맞는 가벼운 메뉴예요.");
+  } else if (mealType === "dinner" && menu.heavyLevel === 3) {
+    reasons.push("저녁에 든든하게 드시기 좋은 메뉴예요.");
+  } else if (mealType === "lunch" && menu.heavyLevel === 2) {
+    reasons.push("점심으로 적당한 메뉴예요.");
+  }
+
+  if (preferences.preferHealthy && (menu.protein === "vegetarian" || menu.base === "salad")) {
+    reasons.push("건강을 생각하시는 분께 추천해요.");
   }
 
   const cuisineCount = recentCuisines[menu.cuisine] || 0;
