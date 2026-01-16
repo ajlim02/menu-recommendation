@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Menu, CuisineType, cuisineLabels, UserPreferences } from "@shared/schema";
-import { Check, ChevronRight, Heart, Utensils } from "lucide-react";
+import { Check, ChevronRight, Heart, Utensils, RefreshCw } from "lucide-react";
 
 interface TasteOnboardingProps {
   onComplete: () => void;
@@ -18,6 +18,15 @@ export function TasteOnboarding({ onComplete }: TasteOnboardingProps) {
   const queryClient = useQueryClient();
   const [selectedMenuIds, setSelectedMenuIds] = useState<string[]>([]);
   const [currentCuisineIndex, setCurrentCuisineIndex] = useState(0);
+  const [refreshCounts, setRefreshCounts] = useState<Record<CuisineType, number>>({
+    korean: 0,
+    chinese: 0,
+    japanese: 0,
+    western: 0,
+    bunsik: 0,
+    asian: 0,
+    other: 0,
+  });
 
   const { data: candidates, isLoading } = useQuery<Record<CuisineType, Menu[]>>({
     queryKey: ["/api/menu-candidates"],
@@ -51,6 +60,32 @@ export function TasteOnboarding({ onComplete }: TasteOnboardingProps) {
 
   const cuisines: CuisineType[] = ["korean", "chinese", "japanese", "western", "bunsik", "asian"];
   const currentCuisine = cuisines[currentCuisineIndex];
+  const MENUS_PER_PAGE = 6;
+
+  const shuffleArray = (array: Menu[], seed: number): Menu[] => {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor((Math.sin(seed * (i + 1)) * 10000) % (i + 1));
+      const jAbs = Math.abs(j);
+      [shuffled[i], shuffled[jAbs]] = [shuffled[jAbs], shuffled[i]];
+    }
+    return shuffled;
+  };
+
+  const allMenusForCuisine = candidates?.[currentCuisine] || [];
+  const currentMenus = useMemo(() => {
+    if (!allMenusForCuisine.length) return [];
+    const refreshCount = refreshCounts[currentCuisine];
+    const shuffled = shuffleArray(allMenusForCuisine, refreshCount + 1);
+    return shuffled.slice(0, MENUS_PER_PAGE);
+  }, [allMenusForCuisine, currentCuisine, refreshCounts]);
+
+  const handleRefresh = () => {
+    setRefreshCounts((prev) => ({
+      ...prev,
+      [currentCuisine]: prev[currentCuisine] + 1,
+    }));
+  };
 
   const toggleMenu = (menuId: string) => {
     setSelectedMenuIds((prev) =>
@@ -102,8 +137,6 @@ export function TasteOnboarding({ onComplete }: TasteOnboardingProps) {
     );
   }
 
-  const currentMenus = candidates[currentCuisine] || [];
-
   return (
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-8">
       <div className="space-y-2 text-center">
@@ -129,10 +162,24 @@ export function TasteOnboarding({ onComplete }: TasteOnboardingProps) {
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Utensils className="h-5 w-5 text-primary" />
-            {cuisineLabels[currentCuisine]} 메뉴
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Utensils className="h-5 w-5 text-primary" />
+              {cuisineLabels[currentCuisine]} 메뉴
+            </CardTitle>
+            {allMenusForCuisine.length > MENUS_PER_PAGE && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleRefresh}
+                className="gap-1 text-muted-foreground"
+                data-testid="button-refresh-candidates"
+              >
+                <RefreshCw className="h-4 w-4" />
+                새로고침
+              </Button>
+            )}
+          </div>
           <CardDescription>
             마음에 드는 메뉴를 선택해주세요 (여러 개 가능)
           </CardDescription>

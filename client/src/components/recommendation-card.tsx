@@ -130,36 +130,39 @@ export function RecommendationCard({ recommendation, isTopPick, rank, onFeedback
         </div>
       </CardContent>
 
-      <CardFooter className="gap-2 pt-0">
+      <CardFooter className="flex gap-2 pt-0">
         <Button
           variant="default"
-          className="flex-1"
+          size="sm"
+          className="flex-1 min-w-0"
           onClick={() => handleAction("select")}
           disabled={feedbackMutation.isPending}
           data-testid={`button-select-${menu.id}`}
         >
-          <Check className="mr-1 h-4 w-4" />
-          선택
+          <Check className="h-4 w-4 shrink-0" />
+          <span className="ml-1 truncate">선택</span>
         </Button>
         <Button
           variant="outline"
-          className="flex-1"
+          size="sm"
+          className="flex-1 min-w-0"
           onClick={() => handleAction("reject")}
           disabled={feedbackMutation.isPending}
           data-testid={`button-reject-${menu.id}`}
         >
-          <X className="mr-1 h-4 w-4" />
-          거절
+          <X className="h-4 w-4 shrink-0" />
+          <span className="ml-1 truncate">거절</span>
         </Button>
         <Button
           variant="ghost"
-          className="flex-1"
+          size="sm"
+          className="flex-1 min-w-0"
           onClick={() => handleAction("skip")}
           disabled={feedbackMutation.isPending}
           data-testid={`button-skip-${menu.id}`}
         >
-          <Clock className="mr-1 h-4 w-4" />
-          나중에
+          <Clock className="h-4 w-4 shrink-0" />
+          <span className="ml-1 truncate">나중에</span>
         </Button>
       </CardFooter>
     </Card>
