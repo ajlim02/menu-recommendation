@@ -77,6 +77,15 @@ Located in `server/recommendation-engine.ts`, the engine calculates menu scores 
 - Meal-type-aware scoring adjustments
 - Category-based menu candidates for onboarding (getMenuCandidatesByCategory)
 
+## Deployment
+
+### Netlify Deployment
+- Configuration in `netlify.toml`
+- Frontend: Built with Vite to `dist/public`
+- Backend: Serverless functions in `netlify/functions/`
+- API routes automatically redirect `/api/*` to `/.netlify/functions/api`
+- Note: Netlify functions use in-memory storage (data resets between cold starts)
+
 ## External Dependencies
 
 ### Database
