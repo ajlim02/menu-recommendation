@@ -77,12 +77,19 @@ Located in `server/recommendation-engine.ts`, the engine calculates menu scores 
 - Meal-type-aware scoring adjustments
 - Category-based menu candidates for onboarding (getMenuCandidatesByCategory)
 
+## Authentication
+- **Replit Auth:** OpenID Connect based authentication
+- Supports Google, GitHub, Apple, email/password login
+- User sessions stored in PostgreSQL
+- Auth routes: `/api/login`, `/api/logout`, `/api/auth/user`
+
 ## External Dependencies
 
 ### Database
 - **PostgreSQL:** Primary database (Drizzle ORM configured)
 - **Drizzle Kit:** Database migrations via `db:push` command
 - **Connection:** Requires `DATABASE_URL` environment variable
+- **Tables:** users, sessions (for auth)
 
 ### Key NPM Packages
 - **UI:** @radix-ui/* primitives, class-variance-authority, tailwind-merge

@@ -5,11 +5,15 @@ import { insertMealRecordSchema, insertFeedbackSchema, userPreferencesSchema, me
 import { calculateRecommendations, calculateInsights, getMenuCandidatesByCategory } from "./recommendation-engine";
 import { getMenuMatcher } from "./menu-matcher";
 import { z } from "zod";
+import { setupAuth, registerAuthRoutes } from "./replit_integrations/auth";
 
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+  
+  await setupAuth(app);
+  registerAuthRoutes(app);
 
   app.get("/api/meal-records", async (req, res) => {
     try {
@@ -234,6 +238,7 @@ export async function registerRoutes(
         excludedIngredients: [],
         favoriteMenuIds: [],
         preferHealthy: false,
+        fitnessGoal: "none" as const,
         onboardingCompleted: true,
       };
 

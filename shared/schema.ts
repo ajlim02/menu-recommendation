@@ -133,10 +133,4 @@ export const priceLabels: Record<string, string> = {
   high: "고가",
 };
 
-export const users = {} as any;
-export const insertUserSchema = z.object({
-  username: z.string(),
-  password: z.string(),
-});
-export type InsertUser = z.infer<typeof insertUserSchema>;
-export type User = { id: string; username: string; password: string };
+export * from "./models/auth";
