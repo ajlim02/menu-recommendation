@@ -18,13 +18,16 @@ import {
   spicyLabels,
   heavyLabels,
   priceLabels,
+  fitnessGoalTypes,
+  fitnessGoalLabels,
   CuisineType,
   BaseType,
   ProteinType,
+  FitnessGoalType,
 } from "@shared/schema";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
-import { Settings, Flame, Scale, Banknote, X, Plus, Soup, Dumbbell } from "lucide-react";
+import { Settings, Flame, Scale, Banknote, X, Plus, Soup, Dumbbell, Target } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 
@@ -64,6 +67,7 @@ const defaultPreferences: UserPreferences = {
   excludedIngredients: [],
   favoriteMenuIds: [],
   preferHealthy: false,
+  fitnessGoal: "none",
   onboardingCompleted: false,
 };
 
@@ -343,7 +347,11 @@ export function PreferenceControls() {
               id="health-mode"
               checked={localPrefs.preferHealthy}
               onCheckedChange={(checked) =>
-                setLocalPrefs({ ...localPrefs, preferHealthy: checked })
+                setLocalPrefs({ 
+                  ...localPrefs, 
+                  preferHealthy: checked,
+                  fitnessGoal: checked ? localPrefs.fitnessGoal : "none"
+                })
               }
               data-testid="switch-healthy"
             />
@@ -351,6 +359,33 @@ export function PreferenceControls() {
           <p className="text-xs text-muted-foreground">
             운동 중이시거나 건강한 식단을 원하시면 켜주세요. 샐러드, 채식, 가벼운 메뉴를 우선 추천해요.
           </p>
+
+          {localPrefs.preferHealthy && (
+            <div className="mt-4 space-y-3 border-t pt-4">
+              <h4 className="flex items-center gap-1.5 text-sm font-medium">
+                <Target className="h-4 w-4 text-blue-500" />
+                운동 목적
+              </h4>
+              <div className="flex flex-wrap gap-2">
+                {fitnessGoalTypes.map((goal) => (
+                  <ToggleChip
+                    key={goal}
+                    label={fitnessGoalLabels[goal]}
+                    selected={localPrefs.fitnessGoal === goal}
+                    onClick={() =>
+                      setLocalPrefs({ ...localPrefs, fitnessGoal: goal })
+                    }
+                    testId={`chip-fitness-${goal}`}
+                  />
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {localPrefs.fitnessGoal === "diet" && "저칼로리, 가벼운 메뉴를 우선 추천해요."}
+                {localPrefs.fitnessGoal === "muscle" && "고단백 메뉴를 우선 추천해요."}
+                {localPrefs.fitnessGoal === "none" && "특별한 운동 목적 없이 건강한 식단을 추천해요."}
+              </p>
+            </div>
+          )}
         </div>
 
         <div className="space-y-3">

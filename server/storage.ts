@@ -38,6 +38,7 @@ const defaultPreferences: UserPreferences = {
   excludedIngredients: [],
   favoriteMenuIds: [],
   preferHealthy: false,
+  fitnessGoal: "none",
   onboardingCompleted: false,
 };
 

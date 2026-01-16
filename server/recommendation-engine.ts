@@ -92,6 +92,28 @@ export function calculateRecommendations(
       if (menu.heavyLevel === 3) {
         healthBonus -= 15;
       }
+      
+      if (preferences.fitnessGoal === "diet") {
+        if (menu.heavyLevel === 1) {
+          healthBonus += 15;
+        }
+        if (menu.base === "salad") {
+          healthBonus += 10;
+        }
+        if (menu.heavyLevel === 3) {
+          healthBonus -= 20;
+        }
+      } else if (preferences.fitnessGoal === "muscle") {
+        if (menu.protein === "chicken" || menu.protein === "beef") {
+          healthBonus += 20;
+        }
+        if (menu.protein === "seafood" || menu.protein === "pork") {
+          healthBonus += 10;
+        }
+        if (menu.heavyLevel >= 2) {
+          healthBonus += 5;
+        }
+      }
     }
 
     let favoriteBonus = 0;

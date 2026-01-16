@@ -12,6 +12,15 @@ export type ProteinType = typeof proteinTypes[number];
 export const mealTypes = ["breakfast", "lunch", "dinner", "snack"] as const;
 export type MealType = typeof mealTypes[number];
 
+export const fitnessGoalTypes = ["none", "diet", "muscle"] as const;
+export type FitnessGoalType = typeof fitnessGoalTypes[number];
+
+export const fitnessGoalLabels: Record<FitnessGoalType, string> = {
+  none: "해당 없음",
+  diet: "다이어트",
+  muscle: "근육 증가",
+};
+
 export const menuSchema = z.object({
   id: z.string(),
   canonicalName: z.string(),
@@ -52,6 +61,7 @@ export const userPreferencesSchema = z.object({
   excludedIngredients: z.array(z.string()),
   favoriteMenuIds: z.array(z.string()).default([]),
   preferHealthy: z.boolean().default(false),
+  fitnessGoal: z.enum(fitnessGoalTypes).default("none"),
   onboardingCompleted: z.boolean().default(false),
 });
 

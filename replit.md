@@ -43,7 +43,7 @@ Preferred communication style: Simple, everyday language.
 **Key API Endpoints:**
 - `GET/POST/DELETE /api/meal-records` - CRUD for meal history (POST auto-corrects menu names via fuzzy matching)
 - `GET /api/menu-suggestions?q=query` - Autocomplete suggestions with fuzzy matching
-- `GET/PUT /api/preferences` - User preference management (includes favoriteMenuIds, preferHealthy, onboardingCompleted)
+- `GET/PUT /api/preferences` - User preference management (includes favoriteMenuIds, preferHealthy, fitnessGoal, onboardingCompleted)
 - `GET /api/recommendations?mealType=lunch&excludeIds=id1,id2` - Get personalized menu suggestions with meal-type and exclusion support
 - `GET /api/menu-candidates` - Get category-grouped menu candidates for taste onboarding
 - `POST /api/feedback` - Record user actions on recommendations
@@ -69,7 +69,7 @@ Located in `server/recommendation-engine.ts`, the engine calculates menu scores 
 - Repetition penalty (25%) - recently eaten items scored lower
 - Feedback weight (10%) - liked/disliked items adjusted
 - Meal-type bonus (10%) - breakfast prefers lighter foods (heavyLevel 1-2), dinner prefers heavier foods (heavyLevel 2-3)
-- Health bonus (5%) - vegetarian, salad, light menus preferred when preferHealthy is enabled
+- Health bonus (5%) - vegetarian, salad, light menus preferred when preferHealthy is enabled; fitnessGoal adjusts scoring (diet: lighter foods, muscle: high-protein foods)
 - Favorite bonus (5%) - menus selected during taste onboarding get extra score
 
 **Key Features:**
