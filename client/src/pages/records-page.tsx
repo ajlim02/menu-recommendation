@@ -3,13 +3,22 @@ import { MealRecordList } from "@/components/meal-record-list";
 import { DemoMode } from "@/components/demo-mode";
 import { useQuery } from "@tanstack/react-query";
 import { MealRecord } from "@shared/schema";
+import { Button } from "@/components/ui/button";
+import { ArrowRight, Sparkles } from "lucide-react";
+import { useLocation } from "wouter";
 
 export default function RecordsPage() {
+  const [, setLocation] = useLocation();
   const { data: records } = useQuery<MealRecord[]>({
     queryKey: ["/api/meal-records"],
   });
 
   const showDemo = !records || records.length === 0;
+  const hasRecords = records && records.length > 0;
+
+  const handleGoToRecommendations = () => {
+    setLocation("/recommendations");
+  };
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-8 md:px-8">
@@ -27,6 +36,21 @@ export default function RecordsPage() {
       <MealRecordForm />
 
       <MealRecordList />
+
+      {hasRecords && (
+        <div className="pt-4">
+          <Button 
+            onClick={handleGoToRecommendations} 
+            className="w-full gap-2"
+            size="lg"
+            data-testid="button-go-recommendations"
+          >
+            <Sparkles className="h-5 w-5" />
+            기록 완료! 추천 받으러 가기
+            <ArrowRight className="h-5 w-5" />
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

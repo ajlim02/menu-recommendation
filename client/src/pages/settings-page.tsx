@@ -2,8 +2,17 @@ import { PreferenceControls } from "@/components/preference-controls";
 import { InsightDashboard } from "@/components/insight-dashboard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Settings, BarChart3 } from "lucide-react";
+import { useLocation } from "wouter";
 
 export default function SettingsPage() {
+  const [, setLocation] = useLocation();
+
+  const handleSaveComplete = () => {
+    setTimeout(() => {
+      setLocation("/records");
+    }, 500);
+  };
+
   return (
     <div className="mx-auto max-w-4xl space-y-6 px-4 py-8 md:px-8">
       <div className="space-y-2">
@@ -26,7 +35,7 @@ export default function SettingsPage() {
         </TabsList>
 
         <TabsContent value="preferences" className="space-y-4">
-          <PreferenceControls />
+          <PreferenceControls onSaveComplete={handleSaveComplete} />
         </TabsContent>
 
         <TabsContent value="insights" className="space-y-4">

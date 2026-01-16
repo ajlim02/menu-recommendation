@@ -71,7 +71,11 @@ const defaultPreferences: UserPreferences = {
   onboardingCompleted: false,
 };
 
-export function PreferenceControls() {
+interface PreferenceControlsProps {
+  onSaveComplete?: () => void;
+}
+
+export function PreferenceControls({ onSaveComplete }: PreferenceControlsProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [newExclusion, setNewExclusion] = useState("");
@@ -97,8 +101,9 @@ export function PreferenceControls() {
       queryClient.invalidateQueries({ queryKey: ["/api/recommendations"] });
       toast({
         title: "설정 저장됨",
-        description: "선호도가 업데이트되었어요.",
+        description: "선호도가 업데이트되었어요. 기록 입력으로 이동합니다.",
       });
+      onSaveComplete?.();
     },
     onError: () => {
       toast({

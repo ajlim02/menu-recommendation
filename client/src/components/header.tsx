@@ -1,11 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { ThemeToggle } from "./theme-toggle";
-import { UtensilsCrossed, ClipboardList, Sparkles, Settings, LogIn, LogOut, User } from "lucide-react";
+import { UtensilsCrossed, ClipboardList, Sparkles, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/hooks/use-auth";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Skeleton } from "@/components/ui/skeleton";
 
 const navItems = [
   { href: "/", label: "설정", icon: Settings },
@@ -15,7 +11,6 @@ const navItems = [
 
 export function Header() {
   const [location] = useLocation();
-  const { user, isLoading, isAuthenticated } = useAuth();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -51,33 +46,8 @@ export function Header() {
                 </Link>
               );
             })}
-            <div className="ml-2 flex items-center gap-2 border-l pl-2">
+            <div className="ml-2 border-l pl-2">
               <ThemeToggle />
-              {isLoading ? (
-                <Skeleton className="h-8 w-8 rounded-full" />
-              ) : isAuthenticated && user ? (
-                <div className="flex items-center gap-2">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={user.profileImageUrl || undefined} alt={user.firstName || "User"} />
-                    <AvatarFallback>
-                      <User className="h-4 w-4" />
-                    </AvatarFallback>
-                  </Avatar>
-                  <a href="/api/logout">
-                    <Button variant="ghost" size="sm" className="gap-1.5" data-testid="button-logout">
-                      <LogOut className="h-4 w-4" />
-                      <span className="hidden sm:inline">로그아웃</span>
-                    </Button>
-                  </a>
-                </div>
-              ) : (
-                <a href="/api/login">
-                  <Button variant="default" size="sm" className="gap-1.5" data-testid="button-login">
-                    <LogIn className="h-4 w-4" />
-                    <span className="hidden sm:inline">로그인</span>
-                  </Button>
-                </a>
-              )}
             </div>
           </nav>
         </div>
