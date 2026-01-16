@@ -4,9 +4,9 @@ import { UtensilsCrossed, ClipboardList, Sparkles, Settings } from "lucide-react
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { href: "/", label: "기록 입력", icon: ClipboardList },
+  { href: "/", label: "설정", icon: Settings },
+  { href: "/records", label: "기록 입력", icon: ClipboardList },
   { href: "/recommendations", label: "추천", icon: Sparkles },
-  { href: "/settings", label: "설정", icon: Settings },
 ];
 
 export function Header() {

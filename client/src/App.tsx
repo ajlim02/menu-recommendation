@@ -13,9 +13,9 @@ import SettingsPage from "@/pages/settings-page";
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={RecordsPage} />
+      <Route path="/" component={SettingsPage} />
+      <Route path="/records" component={RecordsPage} />
       <Route path="/recommendations" component={RecommendationsPage} />
-      <Route path="/settings" component={SettingsPage} />
       <Route component={NotFound} />
     </Switch>
   );
