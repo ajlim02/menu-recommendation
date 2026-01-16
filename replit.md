@@ -6,8 +6,11 @@ This is a personalized meal recommendation web application built for Korean user
 
 **Core Features:**
 - Meal record tracking (last 7 days)
-- Personalized preference settings (cuisine type, base, protein, spiciness, etc.)
-- Smart menu recommendations with diversity scoring
+- Taste onboarding flow (select favorite foods by category to build taste profile)
+- Personalized preference settings (cuisine type, base, protein, spiciness, health preference, etc.)
+- Smart menu recommendations with diversity scoring and meal-type awareness
+- Meal-by-meal recommendation flow (breakfast → lunch → dinner with auto-progression)
+- Dynamic alternatives (reject/skip shows new options immediately)
 - Feedback system to improve future recommendations
 - Insights dashboard showing eating patterns
 
@@ -39,8 +42,9 @@ Preferred communication style: Simple, everyday language.
 
 **Key API Endpoints:**
 - `GET/POST/DELETE /api/meal-records` - CRUD for meal history
-- `GET/PUT /api/preferences` - User preference management
-- `GET /api/recommendations` - Get personalized menu suggestions
+- `GET/PUT /api/preferences` - User preference management (includes favoriteMenuIds, preferHealthy, onboardingCompleted)
+- `GET /api/recommendations?mealType=lunch&excludeIds=id1,id2` - Get personalized menu suggestions with meal-type and exclusion support
+- `GET /api/menu-candidates` - Get category-grouped menu candidates for taste onboarding
 - `POST /api/feedback` - Record user actions on recommendations
 - `GET /api/insights` - Eating pattern analytics
 
@@ -58,10 +62,18 @@ Preferred communication style: Simple, everyday language.
 
 ### Recommendation Engine
 Located in `server/recommendation-engine.ts`, the engine calculates menu scores based on:
-- Preference matching (weighted by user settings)
-- Diversity bonus (avoid repetition of cuisine/base types)
-- Repetition penalty (recently eaten items scored lower)
-- Feedback history (liked/disliked items adjusted)
+- Preference matching (25%) - weighted by user settings (cuisine, base, protein, soup, spicy, heavy, price)
+- Diversity bonus (20%) - avoid repetition of cuisine/base types
+- Repetition penalty (25%) - recently eaten items scored lower
+- Feedback weight (10%) - liked/disliked items adjusted
+- Meal-type bonus (10%) - breakfast prefers lighter foods (heavyLevel 1-2), dinner prefers heavier foods (heavyLevel 2-3)
+- Health bonus (5%) - vegetarian, salad, light menus preferred when preferHealthy is enabled
+- Favorite bonus (5%) - menus selected during taste onboarding get extra score
+
+**Key Features:**
+- Dynamic exclusion via excludeMenuIds parameter (for reject/skip alternatives)
+- Meal-type-aware scoring adjustments
+- Category-based menu candidates for onboarding (getMenuCandidatesByCategory)
 
 ## External Dependencies
 
